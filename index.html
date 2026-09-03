@@ -283,7 +283,6 @@
           <tr>
             <th>Rank</th>
             <th>Player</th>
-            <th style="text-align: center;">Points Scale</th>
             <th style="text-align: right;">Total Points</th>
           </tr>
         </thead>
@@ -368,7 +367,7 @@
         scoreboardModal.classList.add("visible");
         leaderboardModal.classList.remove("visible");
       } else if (isGameOver && isShowLeaderboard) {
-        renderLeaderboard(totalPlayers, names, scores, state.matchPoints || {});
+        renderLeaderboard(totalPlayers, names, state.matchPoints || {});
         scoreboardModal.classList.remove("visible");
         leaderboardModal.classList.add("visible");
       } else {
@@ -447,20 +446,20 @@
       });
     }
 
-    function renderLeaderboard(totalPlayers, names, scores, existingMatchPoints) {
-      const standings = getStandings(totalPlayers, names, scores);
+    function renderLeaderboard(totalPlayers, names, matchPoints) {
+      let standings = [];
+      for (let p = 1; p <= totalPlayers; p++) {
+        standings.push({ id: p, name: names[p] || `Player ${p}`, pts: matchPoints[p] || 0 });
+      }
+      standings.sort((a, b) => b.pts - a.pts);
+
       leaderboardBody.innerHTML = "";
-
       standings.forEach((player, index) => {
-        const ptsEarned = index < POINTS_SCALE.length ? POINTS_SCALE[index] : 1;
-        const totalPts = (existingMatchPoints[player.id] || 0) + ptsEarned;
-
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td><b>#${index + 1}</b></td>
           <td>${player.name}</td>
-          <td style="text-align: center; color:#ffb74d;">+${ptsEarned}</td>
-          <td style="text-align: right; font-weight: bold; color:#00e676;">${totalPts} pts</td>
+          <td style="text-align: right; font-weight: bold; color:#00e676;">${player.pts} pts</td>
         `;
         leaderboardBody.appendChild(tr);
       });
@@ -468,6 +467,9 @@
 
     // Leaderboard button listener
     document.getElementById("btn-show-leaderboard").addEventListener("click", () => {
+      // Guard against multiple additions if leaderboard is already showing
+      if (localState.showLeaderboard) return;
+
       const totalPlayers = localState.playerCount || 2;
       const names = localState.playerNames || {};
       const scores = localState.dartScores || {};
